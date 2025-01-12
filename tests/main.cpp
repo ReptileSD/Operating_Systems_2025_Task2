@@ -5,7 +5,7 @@ void testProcessManager() {
     std::cout << "Library ProcessManager Tests:\n";
 
     // Test 1
-    auto process = ProcessManager::startProcess("echo \"Hello, World!\"");
+    auto process = ProcessManager::startProcess("echo 123");
     int exitCode = ProcessManager::waitForProcess(process);
 
     std::cout << "Proccess returned code: " << exitCode << std::endl;
