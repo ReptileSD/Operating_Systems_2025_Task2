@@ -1,6 +1,7 @@
 #include "process_manager.h"
 #include <stdexcept>
-#include <iostream>
+#include <vector>
+#include <sstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -23,21 +24,33 @@ namespace ProcessManager {
         ZeroMemory(&pi, sizeof(pi));
 
         if (CreateProcessA(
-            nullptr, 
-            const_cast<char*>(command.c_str()),
+            nullptr,
+            const_cast<char*>(command.c_str()), 
             nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi)) {
 
             process.handle = pi.hProcess;
-            CloseHandle(pi.hThread); 
         } else {
-            throw std::runtime_error("Unable to create process: " + std::to_string(GetLastError()));
+            throw std::runtime_error("Unable to create process.");
         }
+
 #else
+        auto parseCommand = [](const std::string& command) {
+            std::istringstream iss(command);
+            std::vector<char*> args;
+            std::string arg;
+            while (iss >> arg) {
+                args.push_back(const_cast<char*>(arg.c_str()));
+            }
+            args.push_back(nullptr); // Завершающий nullptr
+            return args;
+        };
+
+        std::vector<char*> args = parseCommand(command);
+
         pid_t pid = fork();
         if (pid == 0) {
-            std::cout << "Child process executing command: " << command << std::endl;
-            execlp(command.c_str(), command.c_str(), nullptr);
-            perror("execvp failed");
+            execvp(args[0], args.data());
+            perror("exec error"); // Вывод ошибки, если execvp не удался
             _exit(1);
         } else if (pid > 0) {
             process.pid = pid;
@@ -54,23 +67,13 @@ namespace ProcessManager {
 
 #ifdef _WIN32
         if (WaitForSingleObject(process.handle, INFINITE) == WAIT_OBJECT_0) {
-            if (!GetExitCodeProcess(process.handle, (LPDWORD)&exitCode)) {
-                throw std::runtime_error("Failed to get exit code: " + std::to_string(GetLastError()));
-            }
-            CloseHandle(process.handle);
-        } else {
-            throw std::runtime_error("Failed to wait for process: " + std::to_string(GetLastError()));
+            GetExitCodeProcess(process.handle, (LPDWORD)&exitCode);
         }
 #else
         int status;
-        if (waitpid(process.pid, &status, 0) == -1) {
-            perror("waitpid failed");
-            throw std::runtime_error("Failed to wait for process.");
-        }
+        waitpid(process.pid, &status, 0);
         if (WIFEXITED(status)) {
             exitCode = WEXITSTATUS(status);
-        } else {
-            std::cerr << "Process did not exit normally." << std::endl;
         }
 #endif
 
