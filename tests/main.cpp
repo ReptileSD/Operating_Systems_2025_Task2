@@ -5,7 +5,7 @@ void testProcessManager() {
     std::cout << "Library ProcessManager Tests:\n";
 
     // Test 1
-    auto process = ProcessManager::startProcess("ping 127.0.0.1 -n 5");
+    auto process = ProcessManager::startProcess("ping google.com");
     int exitCode = ProcessManager::waitForProcess(process);
 
     std::cout << "Proccess returned code: " << exitCode << std::endl;
