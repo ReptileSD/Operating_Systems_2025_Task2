@@ -1,7 +1,5 @@
 #include "process_manager.h"
 #include <stdexcept>
-#include <vector>
-#include <sstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,23 +32,9 @@ namespace ProcessManager {
         }
 
 #else
-        auto parseCommand = [](const std::string& command) {
-            std::istringstream iss(command);
-            std::vector<char*> args;
-            std::string arg;
-            while (iss >> arg) {
-                args.push_back(const_cast<char*>(arg.c_str()));
-            }
-            args.push_back(nullptr); // Завершающий nullptr
-            return args;
-        };
-
-        std::vector<char*> args = parseCommand(command);
-
         pid_t pid = fork();
         if (pid == 0) {
-            execvp(args[0], args.data());
-            perror("exec error"); // Вывод ошибки, если execvp не удался
+            execlp(command.c_str(), command.c_str(), nullptr);
             _exit(1);
         } else if (pid > 0) {
             process.pid = pid;

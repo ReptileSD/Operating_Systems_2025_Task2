@@ -5,7 +5,12 @@ void testProcessManager() {
     std::cout << "Library ProcessManager Tests:\n";
 
     // Test 1
-    auto process = ProcessManager::startProcess("echo 123");
+    #ifdef _WIN32
+        auto process = ProcessManager::startProcess("ping google.com");
+    #else
+        auto process = ProcessManager::startProcess("ping -c 5 google.com");
+
+    #endif
     int exitCode = ProcessManager::waitForProcess(process);
 
     std::cout << "Proccess returned code: " << exitCode << std::endl;
@@ -14,7 +19,7 @@ void testProcessManager() {
     try {
         auto badProcess = ProcessManager::startProcess("blablabla");
         int badExitCode = ProcessManager::waitForProcess(badProcess);
-        std::cout << "Unexpected behavior: process returned code: " << badExitCode << std::endl;
+        std::cout << "Unexpected behavior(expected on linux): process returned code: " << badExitCode << std::endl;
     } catch (const std::exception& e) {
         std::cout << "Error occured while process started: " << e.what() << std::endl;
     }
