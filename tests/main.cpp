@@ -7,8 +7,8 @@ void testProcessManager() {
     // Test 1
     #ifdef _WIN32
         auto process = ProcessManager::startProcess("ping google.com");
-    #else
-        auto process = ProcessManager::startProcess("ping -c 5 google.com");
+    #else //execlp needs full path to program
+        auto process = ProcessManager::startProcess("/usr/bin/echo");
 
     #endif
     int exitCode = ProcessManager::waitForProcess(process);
@@ -20,6 +20,7 @@ void testProcessManager() {
         auto badProcess = ProcessManager::startProcess("blablabla");
         int badExitCode = ProcessManager::waitForProcess(badProcess);
         std::cout << "Unexpected behavior(expected on linux): process returned code: " << badExitCode << std::endl;
+        //no file or directory, so process returns 1 on linux
     } catch (const std::exception& e) {
         std::cout << "Error occured while process started: " << e.what() << std::endl;
     }
